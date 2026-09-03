@@ -1,0 +1,55 @@
+Copyright © 2026 GrowWeb IT Company / Ameer Hamza Arshad. All rights reserved.
+
+Opria — AI-Powered Business Growth Operating System
+
+NOTICE: This software is proprietary and confidential. It is NOT open-source
+software and is NOT licensed under the MIT, Apache, GPL, BSD, or any other
+OSI-approved or permissive license. No general reuse license is granted.
+
+1. OWNERSHIP
+   The Opria source code, software architecture, application design,
+   documentation, branding, and all original project materials (collectively,
+   the "Software") are the exclusive proprietary intellectual property of
+   GrowWeb IT Company and/or Ameer Hamza Arshad (the "Rights Holder").
+
+2. NO LICENSE GRANTED
+   Except where expressly authorized in a written agreement signed by the
+   Rights Holder, no license or permission is granted to any person to
+   reproduce, copy, modify, merge, publish, distribute, sublicense, sell,
+   commercially exploit, or create derivative works of the Software, in whole
+   or in part.
+
+3. LIMITED PUBLIC AVAILABILITY
+   This repository is made publicly accessible solely for hackathon evaluation,
+   review, and related authorized purposes. Public visibility does NOT
+   constitute an open-source license, a grant of rights, or permission to reuse
+   the Software beyond that limited purpose.
+
+4. HACKATHON EVALUATORS
+   Hackathon organizers and authorized evaluators may access, inspect, and
+   review the Software for the purposes of the hackathon, subject to the
+   applicable hackathon rules and any written agreements. This notice is a
+   reservation of rights and is subordinate to those rules and agreements; it
+   does not purport to restrict any rights that the hackathon rules expressly
+   grant to organizers or evaluators.
+
+5. THIRD-PARTY COMPONENTS
+   The Software incorporates third-party open-source libraries (for example
+   Next.js, React, Prisma, Tailwind CSS, shadcn/ui, Supabase client libraries,
+   Zod, and AI provider SDKs), each of which remains licensed under its own
+   respective terms. This proprietary notice applies only to the original Opria
+   source code and materials authored by the Rights Holder, not to those
+   third-party components.
+
+6. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   RIGHTS HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING
+   FROM THE USE OF THE SOFTWARE.
+
+7. CONTACT
+   For permission, licensing, or commercial inquiries, contact the Rights
+   Holder via https://github.com/growweb-pk.
+
+All rights not expressly granted above are reserved by the Rights Holder.

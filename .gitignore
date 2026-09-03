@@ -1,0 +1,47 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+
+# Production
+build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env*.local
+.env
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Prisma
+prisma/migrations
+
+# IDE
+.vscode
+.idea
+
+# Internal planning/memory docs — kept locally, never published
+/OPRIA_PROJECT_MEMORY.md
+/OPRIA_IMPLEMENTATION_BLUEPRINT.md
+
+# Root-level browser test/debug screenshots (verification artifacts — not application assets)
+# Leading slash anchors to the repo root; matches e.g. A1-login.png, B10-accepted.png,
+# C12-isolation-redirect.png. Images under public/ or any subdirectory are unaffected.
+/[A-Z][0-9]*.png

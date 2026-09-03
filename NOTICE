@@ -1,0 +1,38 @@
+Opria — AI-Powered Business Growth Operating System
+Copyright © 2026 GrowWeb IT Company / Ameer Hamza Arshad. All rights reserved.
+
+ATTRIBUTION
+  Owner / Rights Holder : GrowWeb IT Company
+                          https://github.com/growweb-pk
+  Author                : Ameer Hamza Arshad
+
+PROPRIETARY STATUS
+  Opria is proprietary, confidential software. It is NOT open-source and is
+  NOT released under the MIT, Apache, GPL, BSD, or any other permissive or
+  OSI-approved license. The original source code, software architecture,
+  application design, documentation, branding, and project materials are the
+  exclusive intellectual property of GrowWeb IT Company and/or Ameer Hamza
+  Arshad.
+
+PUBLIC VISIBILITY
+  This repository is publicly accessible for hackathon evaluation, review, and
+  related authorized purposes only. Public visibility does NOT grant any
+  license to reproduce, modify, distribute, sublicense, sell, commercially
+  exploit, or create derivative works from the Software without prior written
+  permission from the Rights Holder.
+
+HACKATHON EVALUATION
+  Hackathon organizers and authorized evaluators may access and review this
+  repository for the purposes of the hackathon, subject to the applicable
+  hackathon rules and agreements. This notice is a reservation of rights and is
+  subordinate to any such written rules or agreements; it does not restrict
+  rights that those rules expressly grant.
+
+THIRD-PARTY COMPONENTS
+  This project incorporates third-party open-source libraries (for example
+  Next.js, React, Prisma, Tailwind CSS, shadcn/ui, Supabase client libraries,
+  Zod, and AI provider SDKs), each of which remains under its own respective
+  license. The proprietary notice above applies to the original Opria source
+  code and materials, not to those third-party components.
+
+See the LICENSE file for the full proprietary terms.

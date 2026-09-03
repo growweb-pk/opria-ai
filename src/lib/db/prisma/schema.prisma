@@ -1,0 +1,325 @@
+// Prisma schema for Opria
+// Run: npx prisma generate && npx prisma db push
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum Role {
+  BUSINESS
+  PROFESSIONAL
+  ADVISOR
+  VERIFICATION
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum CompanySize {
+  SOLO
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum AssessmentStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum Priority {
+  IMMEDIATE
+  SHORT_TERM
+  MEDIUM_TERM
+  LONG_TERM
+}
+
+enum OpportunityStatus {
+  IDENTIFIED
+  PURSUING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ConversationStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum MessageRole {
+  USER
+  ADVISOR
+  SYSTEM
+}
+
+enum RequirementStatus {
+  DRAFT
+  APPROVED
+  MATCHING
+  MATCHED
+}
+
+enum MatchStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  BUSY
+  UNAVAILABLE
+}
+
+// ─── Core Models ─────────────────────────────────────────
+
+model User {
+  id         String     @id @default(cuid())
+  supabaseId String     @unique // Supabase Auth user ID
+  email      String     @unique
+  role       Role       @default(BUSINESS)
+  status     UserStatus @default(ACTIVE)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  business     BusinessProfile?
+  professional ProfessionalProfile?
+  conversations Conversation[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model BusinessProfile {
+  id           String             @id @default(cuid())
+  userId       String             @unique
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName  String
+  industry     String
+  size         CompanySize
+  location     String
+  website      String?
+  description  String?
+  goals        String[]
+  challenges   String[]
+  verification VerificationStatus @default(PENDING)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  assessments   Assessment[]
+  analyses      BusinessAnalysis[]
+  opportunities Opportunity[]
+  conversations Conversation[]
+  requirements  Requirement[]
+  matchRequests MatchRequest[]
+
+  @@map("business_profiles")
+}
+
+model ProfessionalProfile {
+  id               String             @id @default(cuid())
+  userId           String             @unique
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  title            String
+  skills           String[]
+  services         String[]
+  portfolio        Json?
+  certifications   String[]
+  availability     AvailabilityStatus @default(AVAILABLE)
+  hourlyRate       Float?
+  projectMinBudget Float?
+  projectMaxBudget Float?
+  industryExpertise String[]
+  bio              String?
+  reputation       Float              @default(0)
+  verification     VerificationStatus @default(PENDING)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  matchResults MatchResult[]
+
+  @@map("professional_profiles")
+}
+
+// ─── Assessment ──────────────────────────────────────────
+
+model Assessment {
+  id          String           @id @default(cuid())
+  businessId  String
+  business    BusinessProfile  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  status      AssessmentStatus @default(IN_PROGRESS)
+  responses   AssessmentResponse[]
+  completedAt DateTime?
+  createdAt   DateTime         @default(now())
+
+  @@map("assessments")
+}
+
+model AssessmentResponse {
+  id           String     @id @default(cuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  questionId   String
+  category     String
+  question     String
+  answer       String
+  score        Int
+
+  @@map("assessment_responses")
+}
+
+// ─── AI Analysis ─────────────────────────────────────────
+
+model BusinessAnalysis {
+  id           String          @id @default(cuid())
+  businessId   String
+  business     BusinessProfile @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  assessmentId String?
+  analysisData Json            // Structured AI analysis output
+  healthScores Json            // 8 sub-scores
+  provenance   Json            // Per-field data source tracking
+  confidence   Float
+  createdAt    DateTime        @default(now())
+
+  opportunities Opportunity[]
+
+  @@map("business_analyses")
+}
+
+model Opportunity {
+  id         String            @id @default(cuid())
+  businessId String
+  business   BusinessProfile   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  analysisId String
+  analysis   BusinessAnalysis  @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  title      String
+  category   String
+  priority   Priority
+  confidence Float
+  details    Json              // Full opportunity data
+  status     OpportunityStatus @default(IDENTIFIED)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@map("opportunities")
+}
+
+// ─── Conversations & Requirements ────────────────────────
+
+model Conversation {
+  id         String             @id @default(cuid())
+  businessId String
+  business   BusinessProfile    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status     ConversationStatus @default(ACTIVE)
+  context    Json?              // Accumulated context for AI
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  messages    Message[]
+  requirement Requirement?
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole
+  content        String
+  metadata       Json?        // AI-specific metadata
+  createdAt      DateTime     @default(now())
+
+  @@map("messages")
+}
+
+model Requirement {
+  id             String            @id @default(cuid())
+  conversationId String            @unique
+  conversation   Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  businessId     String
+  business       BusinessProfile   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  title          String
+  structuredData Json              // Structured requirement document
+  status         RequirementStatus @default(DRAFT)
+  confidence     Float
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  matchRequests MatchRequest[]
+
+  @@map("requirements")
+}
+
+// ─── Matching ────────────────────────────────────────────
+
+model MatchRequest {
+  id            String          @id @default(cuid())
+  requirementId String
+  requirement   Requirement     @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  businessId    String
+  business      BusinessProfile @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  status        MatchStatus     @default(PENDING)
+  results       Json?           // Full scoring breakdown
+  createdAt     DateTime        @default(now())
+  completedAt   DateTime?
+
+  matchResults MatchResult[]
+
+  @@map("match_requests")
+}
+
+model MatchResult {
+  id              String     @id @default(cuid())
+  matchRequestId  String
+  matchRequest    MatchRequest @relation(fields: [matchRequestId], references: [id], onDelete: Cascade)
+  professionalId  String
+  professional    ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  structuredScore Float      // Algorithm score (0-100)
+  aiScore         Float      // AI semantic score (0-100)
+  finalScore      Float      // Weighted composite (0-100)
+  rank            Int
+  scoreBreakdown  Json       // Detailed scoring per factor
+  explanation     Json       // AI-generated explanation
+  createdAt       DateTime   @default(now())
+
+  @@map("match_results")
+}
+
+// ─── Audit ───────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
