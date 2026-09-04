@@ -2,6 +2,20 @@
 
 Opria helps businesses understand their needs before connecting them with the right professionals. It is not a marketplace — it is the advisory layer that sits in front of every business technology decision.
 
+## 🚀 Live Demo
+
+**Live URL:** https://opria-ai.vercel.app/
+
+Opria is deployed on Vercel and connected to Supabase (Postgres + Auth) and Google Gemini.
+
+**Demo accounts** — all use the password `OpriaDemo2026!` (seeded demonstration data, see [`prisma/seed.ts`](prisma/seed.ts)):
+
+| Role | Email |
+| --- | --- |
+| Business owner (Bella's Boutique) | `bella@demo.opria.app` |
+| Professional (Alex Chen) | `alex.chen@demo.opria.app` |
+| Admin | `admin@demo.opria.app` |
+
 ## Core Innovation
 
 Unlike traditional marketplaces that start after a business has decided what it needs, Opria starts **before** — helping a business understand what problem it is actually trying to solve before any solution is recommended.
