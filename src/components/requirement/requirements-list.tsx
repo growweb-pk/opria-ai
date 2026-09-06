@@ -11,7 +11,7 @@ interface RequirementData {
   summary?: string;
   goals?: Array<{ description: string; source?: string }>;
   requirements?: Array<{ category: string; description: string; priority: string; source?: string }>;
-  constraints?: Array<{ type: string; description: string; source?: string }>;
+  constraints?: Array<{ type?: string; description?: unknown; source?: string }>;
   budget?: { estimated?: string; range?: string; confidence?: number; source?: string };
   timeline?: { estimated?: string; deadline?: string; confidence?: number; source?: string };
   professionalCategories?: Array<{
@@ -126,17 +126,40 @@ export function RequirementsList({ requirements }: { requirements: RequirementIt
 
               {data.constraints && data.constraints.length > 0 && (
                 <Section title="Constraints">
-                  {data.constraints.map((c, i) => (
-                    <li key={i}>
-                      <span className="font-medium capitalize">{c.type}:</span> {c.description}
-                    </li>
-                  ))}
+                  {data.constraints.map((c, i) => {
+                    const text = readableValue(c?.description);
+                    if (!text) return null;
+                    const label = (c?.type ?? "other").toString().replace(/[_-]/g, " ");
+                    return (
+                      <li key={i}>
+                        <span className="font-medium capitalize">{label}:</span> {text}
+                      </li>
+                    );
+                  })}
                 </Section>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <Info label="Budget" value={data.budget?.estimated ?? data.budget?.range ?? "Not specified"} />
-                <Info label="Timeline" value={data.timeline?.estimated ?? data.timeline?.deadline ?? "Not specified"} />
+                <Info
+                  label="Budget"
+                  value={
+                    firstNonEmpty(
+                      data.budget?.estimated,
+                      data.budget?.range,
+                      readableValue(findConstraintValue(data.constraints, "budget"))
+                    ) || "Not specified"
+                  }
+                />
+                <Info
+                  label="Timeline"
+                  value={
+                    firstNonEmpty(
+                      data.timeline?.estimated,
+                      data.timeline?.deadline,
+                      readableValue(findConstraintValue(data.constraints, "timeline"))
+                    ) || "Not specified"
+                  }
+                />
               </div>
 
               {data.professionalCategories && data.professionalCategories.length > 0 && (
@@ -186,6 +209,78 @@ export function RequirementsList({ requirements }: { requirements: RequirementIt
       })}
     </div>
   );
+}
+
+/**
+ * Requirement `structuredData` is persisted as raw JSON and cast directly into
+ * this component without validation. Older records (and occasionally AI output)
+ * store constraint values as nested objects/arrays instead of plain strings, and
+ * may omit the top-level `budget`/`timeline` fields. These helpers coerce any
+ * persisted shape into human-readable text so the UI never renders raw JSON.
+ */
+function readableValue(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    // The AI structuring agent JSON-stringifies nested constraint values, so a
+    // persisted description can itself be a JSON object/array literal. Parse it
+    // back so we render the human fields instead of the raw JSON text.
+    if (
+      (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+      (trimmed.startsWith("[") && trimmed.endsWith("]"))
+    ) {
+      try {
+        return readableValue(JSON.parse(trimmed));
+      } catch {
+        return trimmed;
+      }
+    }
+    return trimmed;
+  }
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) {
+    return value.map(readableValue).filter(Boolean).join(", ");
+  }
+  if (typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    const preferred = [
+      "description",
+      "amount",
+      "estimated",
+      "range",
+      "deadline",
+      "value",
+      "text",
+      "detail",
+      "notes",
+    ];
+    for (const key of preferred) {
+      if (key in obj) {
+        const text = readableValue(obj[key]);
+        if (text) return text;
+      }
+    }
+    return Object.values(obj).map(readableValue).filter(Boolean).join(", ");
+  }
+  return String(value);
+}
+
+function firstNonEmpty(...values: Array<string | null | undefined>): string {
+  for (const value of values) {
+    if (value && value.trim()) return value.trim();
+  }
+  return "";
+}
+
+function findConstraintValue(
+  constraints: RequirementData["constraints"],
+  type: string
+): unknown {
+  if (!Array.isArray(constraints)) return undefined;
+  const match = constraints.find(
+    (c) => (c?.type ?? "").toString().toLowerCase() === type
+  );
+  return match?.description;
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

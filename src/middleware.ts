@@ -4,6 +4,20 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
+  // Fast path: when the request carries no Supabase auth cookie there is no
+  // session to validate or refresh, so skip the network round-trip to Supabase
+  // Auth entirely. This keeps anonymous pages (landing, login, register) fast
+  // while preserving the full getUser() validation for every authenticated
+  // request below. Not a security reduction — getUser() on a cookie-less
+  // request returns null and does nothing anyway.
+  const hasAuthCookie = request.cookies
+    .getAll()
+    .some((cookie) => cookie.name.startsWith("sb-"));
+
+  if (!hasAuthCookie) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
