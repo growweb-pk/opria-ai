@@ -38,6 +38,7 @@ export async function POST() {
         analysis: {
           id: analysis.id,
           healthScores: analysis.healthScores,
+          analysisData: analysis.analysisData,
           confidence: analysis.confidence,
           provenance: analysis.provenance,
           createdAt: analysis.createdAt,

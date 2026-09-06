@@ -7,17 +7,20 @@ import { Briefcase, CheckCircle2, Clock, XCircle } from "lucide-react";
 export default async function ProfessionalOverviewPage() {
   const user = await requireAuth(["PROFESSIONAL"]);
 
-  const profile = await prisma.professionalProfile.findUnique({
-    where: { userId: user.id },
-  });
+  // Profile and matched opportunities are independent reads (both keyed on
+  // user.id) — fetch concurrently. getOpportunitiesForProfessional safely
+  // returns [] when no profile/matches exist, so the UI still gates on hasProfile.
+  const [profile, opportunities] = await Promise.all([
+    prisma.professionalProfile.findUnique({
+      where: { userId: user.id },
+    }),
+    getOpportunitiesForProfessional(user.id),
+  ]);
 
   const hasProfile = !!profile;
 
   // Real opportunity counts derived from persisted MatchResults owned by this
   // professional. No fabricated numbers — an empty profile yields zero matches.
-  const opportunities = hasProfile
-    ? await getOpportunitiesForProfessional(user.id)
-    : [];
   const totalOpportunities = opportunities.length;
   const pendingCount = opportunities.filter(
     (o) => o.responseStatus === "PENDING"

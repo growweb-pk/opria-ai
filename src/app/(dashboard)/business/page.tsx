@@ -7,14 +7,19 @@ import Link from "next/link";
 export default async function BusinessOverviewPage() {
   const user = await requireAuth(["BUSINESS"]);
 
-  const business = await prisma.businessProfile.findUnique({
-    where: { userId: user.id },
-    include: {
-      assessments: { orderBy: { createdAt: "desc" }, take: 1 },
-      analyses: { orderBy: { createdAt: "desc" }, take: 1 },
-      opportunities: { where: { status: "IDENTIFIED" } },
-    },
-  });
+  // The business profile and the demo-journey status are independent reads
+  // (both keyed on user.id) — fetch them concurrently instead of serially.
+  const [business, journey] = await Promise.all([
+    prisma.businessProfile.findUnique({
+      where: { userId: user.id },
+      include: {
+        assessments: { orderBy: { createdAt: "desc" }, take: 1 },
+        analyses: { orderBy: { createdAt: "desc" }, take: 1 },
+        opportunities: { where: { status: "IDENTIFIED" } },
+      },
+    }),
+    getDemoJourney(user.id),
+  ]);
 
   const hasProfile = !!business;
   const hasAssessment = business?.assessments.length
@@ -28,8 +33,8 @@ export default async function BusinessOverviewPage() {
     return hs?.overall ?? null;
   })();
 
-  // Phase 7 — demo fast-forward journey (reads persisted data, zero AI).
-  const journey = await getDemoJourney(user.id);
+  // recommendationsCount depends on business.id, so it runs after the parallel
+  // fetch above. (The demo journey was already loaded in that Promise.all.)
   const recommendationsCount = business
     ? await prisma.matchResult.count({
         where: { matchRequest: { businessId: business.id } },

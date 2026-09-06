@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -104,7 +103,6 @@ export function AnalysisResultsClient({
 }: {
   initialAnalysis: AnalysisResult | null;
 }) {
-  const router = useRouter();
   const { toast } = useToast();
 
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(initialAnalysis);
@@ -122,20 +120,16 @@ export function AnalysisResultsClient({
         throw new Error(data.error || "Failed to run analysis");
       }
 
-      // Fetch the full analysis (POST returns a subset)
-      const getRes = await fetch("/api/analysis");
-      const getData = await getRes.json();
-
-      if (getRes.ok && getData.analysis) {
-        setAnalysis(getData.analysis);
+      // POST now returns the complete analysis (including analysisData), so the
+      // previous follow-up GET round-trip is no longer needed.
+      if (data.analysis) {
+        setAnalysis(data.analysis);
       }
 
       toast({
         title: "Analysis complete",
         description: "Your business health analysis has been generated.",
       });
-
-      router.refresh();
     } catch (err) {
       toast({
         variant: "destructive",

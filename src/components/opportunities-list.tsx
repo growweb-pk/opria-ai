@@ -116,8 +116,8 @@ export function OpportunitiesClient({
         title: "Opportunities discovered",
         description: `${data.opportunities?.length ?? 0} opportunities identified.`,
       });
-
-      router.refresh();
+      // Client state already holds the full list from the GET above — skip the
+      // router.refresh() round-trip (it would re-fetch this same page for nothing).
     } catch (err) {
       toast({
         variant: "destructive",

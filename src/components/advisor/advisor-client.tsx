@@ -132,7 +132,8 @@ export function AdvisorClient({ opportunityId }: { opportunityId?: string }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to send message");
       setConversation(data.conversation);
-      router.refresh();
+      // setConversation already holds the full updated thread + context, and the
+      // advisor page has no other server data — skip a router.refresh() round-trip.
     } catch (err) {
       setMessage(content);
       toast({

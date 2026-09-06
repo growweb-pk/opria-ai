@@ -13,10 +13,13 @@ export default async function BusinessOpportunitiesPage() {
   let hasAnalysis = false;
 
   if (profile) {
-    const analysis = await getLatestAnalysis(profile.id);
+    // Independent reads — run concurrently to save a serial DB round-trip.
+    const [analysis, opps] = await Promise.all([
+      getLatestAnalysis(profile.id),
+      getOpportunitiesByBusinessId(profile.id),
+    ]);
     hasAnalysis = !!analysis;
 
-    const opps = await getOpportunitiesByBusinessId(profile.id);
     opportunities = opps.map((o) => ({
       id: o.id,
       title: o.title,

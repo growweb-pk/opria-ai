@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -125,8 +126,8 @@ export function RecommendationsList({ groups }: { groups: RecommendationGroup[] 
               Approve a requirement and the matching engine will rank professionals for you.
             </p>
           </div>
-          <Button onClick={() => (window.location.href = "/business/requirements")}>
-            Go to Requirements
+          <Button asChild>
+            <Link href="/business/requirements">Go to Requirements</Link>
           </Button>
         </CardContent>
       </Card>
