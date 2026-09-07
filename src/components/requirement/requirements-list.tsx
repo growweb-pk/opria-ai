@@ -101,7 +101,7 @@ export function RequirementsList({ requirements }: { requirements: RequirementIt
               </div>
             </CardHeader>
             <CardContent className="space-y-5">
-              {data.summary && (
+              {data.summary && !isPlaceholderSummary(data.summary) && (
                 <p className="text-sm text-muted-foreground leading-relaxed">{data.summary}</p>
               )}
 
@@ -218,6 +218,14 @@ export function RequirementsList({ requirements }: { requirements: RequirementIt
  * may omit the top-level `budget`/`timeline` fields. These helpers coerce any
  * persisted shape into human-readable text so the UI never renders raw JSON.
  */
+// The structuring agent falls back to this exact sentence when it produces no
+// summary; rendering it verbatim reads as unfinished, so hide it from users.
+const SUMMARY_FALLBACK = "Requirement summary was not provided by the AI output.";
+
+function isPlaceholderSummary(summary: string): boolean {
+  return summary.trim() === SUMMARY_FALLBACK;
+}
+
 function readableValue(value: unknown): string {
   if (value == null) return "";
   if (typeof value === "string") {

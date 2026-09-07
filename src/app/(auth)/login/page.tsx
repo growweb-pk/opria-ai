@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/modules/auth/supabase-browser";
@@ -11,6 +11,24 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  // Surface server-side redirect reasons that arrive as ?error=<code> on the
+  // login URL (e.g. a role-denied dashboard visit), so a bounced user always
+  // sees WHY instead of a silent redirect back to the form.
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("error");
+    if (code === "unauthorized") {
+      setError(
+        "Your account role is not allowed to access that page. Sign in with an account that has the right role."
+      );
+    } else if (code === "profile_missing") {
+      setError(
+        "We couldn't find a profile for this account. Complete registration first."
+      );
+    } else if (code) {
+      setError("Unable to sign you in to that page. Please try again.");
+    }
+  }, []);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();

@@ -190,7 +190,14 @@ function MatchCard({ match }: { match: RecommendationMatch }) {
               )}
             </div>
             <div>
-              <CardTitle className="text-base">{professional.name}</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base">{professional.name}</CardTitle>
+                {match.rank === 1 && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                    Top match
+                  </span>
+                )}
+              </div>
               <CardDescription>{professional.title}</CardDescription>
             </div>
           </div>
