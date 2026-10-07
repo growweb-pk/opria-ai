@@ -31,6 +31,7 @@ import { z } from "zod";
 import { env } from "@/lib/config/env";
 import { OpenAIAdapter } from "./adapters/openai";
 import { GeminiAdapter } from "./adapters/gemini";
+import { schemaOutline } from "./schema-outline";
 import type {
   AIProviderAdapter,
   AIProviderConfig,
@@ -90,7 +91,24 @@ export async function callStructured<T extends z.ZodType>(
   outputSchema: T,
   options: StructuredCallOptions = {}
 ): Promise<z.infer<T>> {
-  return getAdapter().callStructured(userPrompt, outputSchema, options);
+  // Embed the exact output shape in the system prompt. Free-tier models
+  // otherwise rename/drop fields, fail Zod validation, and burn the fallback
+  // chain — each bad attempt costs 10-15s of generation time.
+  let schemaHint = "";
+  try {
+    schemaHint = schemaOutline(outputSchema);
+  } catch {
+    // Never let a hint-generation bug break the AI call
+  }
+
+  const systemPrompt = schemaHint
+    ? `${options.systemPrompt ?? "You are a precise AI assistant."}\n\nRespond with ONLY a JSON object that matches this exact shape — use these exact field names, nesting, and value types (numbers as numbers, booleans as booleans, arrays as arrays, no markdown fences, no commentary):\n${schemaHint}\n\nKeep every string field as short as the schema allows — short titles, 1-2 sentence descriptions. Prefer brief arrays over long prose.`
+    : options.systemPrompt;
+
+  return getAdapter().callStructured(userPrompt, outputSchema, {
+    ...options,
+    systemPrompt,
+  });
 }
 
 /**
