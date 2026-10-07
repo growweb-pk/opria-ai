@@ -21,25 +21,37 @@ interface ModelProbeResult {
   status: number | null;
   ms: number | null;
   finishReason: string | null;
+  usage: { completionTokens: number | null; reasoningTokens: number | null } | null;
+  contentPreview: string | null;
   error: string | null;
 }
 
+const DEFAULT_PROMPT = 'Reply with exactly: {"ok":true}';
+
 /**
  * POST /api/ai/probe (admin only)
- * Sends a tiny request to every model in the configured fallback chain so
- * admins can see which upstreams are reachable from the deployment's network.
- * Never echoes the API key; reveals only per-model reachability.
+ * Sends a request to every model in the configured fallback chain so admins
+ * can see which upstreams are reachable from the deployment's network.
+ * Optional body { prompt, maxTokens, models } overrides the defaults so a
+ * realistic workload can be replayed. Never echoes the API key.
  */
-export async function POST() {
+export async function POST(request: Request) {
   try {
     await requireAuth(["ADMIN"]);
 
-    const chain = (env.AI_MODEL ?? "")
-      .split(",")
-      .map((m) => m.trim())
-      .filter(Boolean);
+    const body = (await request.json().catch(() => ({}))) as {
+      prompt?: string;
+      maxTokens?: number;
+      models?: string[];
+    };
 
-    const prompt = 'Reply with exactly: {"ok":true}';
+    const chain = (body.models?.length ? body.models : (env.AI_MODEL ?? "").split(","))
+      .map((m) => m.trim())
+      .filter(Boolean)
+      .slice(0, 10);
+
+    const prompt = body.prompt ?? DEFAULT_PROMPT;
+    const maxTokens = Math.min(Math.max(body.maxTokens ?? 32, 1), 8192);
     const results: ModelProbeResult[] = [];
 
     for (const model of chain) {
@@ -56,18 +68,26 @@ export async function POST() {
             body: JSON.stringify({
               model,
               messages: [{ role: "user", content: prompt }],
-              max_tokens: 32,
+              max_tokens: maxTokens,
+              response_format: { type: "json_object" },
             }),
-            signal: AbortSignal.timeout(20_000),
+            signal: AbortSignal.timeout(55_000),
           }
         );
         const data = await res.json().catch(() => ({}));
+        const content: string | null = data.choices?.[0]?.message?.content ?? null;
         results.push({
           model,
           ok: res.ok,
           status: res.status,
           ms: Date.now() - t0,
           finishReason: data.choices?.[0]?.finish_reason ?? null,
+          usage: {
+            completionTokens: data.usage?.completion_tokens ?? null,
+            reasoningTokens:
+              data.usage?.completion_tokens_details?.reasoning_tokens ?? null,
+          },
+          contentPreview: content ? content.slice(0, 200) : null,
           error: res.ok
             ? null
             : (data.error?.message ?? `HTTP ${res.status}`).slice(0, 200),
@@ -79,6 +99,8 @@ export async function POST() {
           status: null,
           ms: Date.now() - t0,
           finishReason: null,
+          usage: null,
+          contentPreview: null,
           error: error instanceof Error ? error.message : String(error),
         });
       }
