@@ -28,6 +28,15 @@ export class GeminiAdapter implements AIProviderAdapter {
     this.ai = new GoogleGenAI({ apiKey: env.AI_API_KEY });
   }
 
+  /**
+   * Gemini has no multi-model fallback — if a comma-separated chain is
+   * configured, use the first entry.
+   */
+  private resolveModel(modelOption: string | undefined): string {
+    const raw = modelOption ?? env.AI_MODEL;
+    return raw.split(",")[0].trim();
+  }
+
   async callStructured<T extends z.ZodType>(
     userPrompt: string,
     outputSchema: T,
@@ -39,7 +48,7 @@ export class GeminiAdapter implements AIProviderAdapter {
 
     try {
       const response = await this.ai.models.generateContent({
-        model: options.model ?? env.AI_MODEL,
+        model: this.resolveModel(options.model),
         contents: userPrompt,
         config: {
           systemInstruction: systemPrompt,
@@ -72,7 +81,7 @@ export class GeminiAdapter implements AIProviderAdapter {
   ): Promise<AsyncIterable<string>> {
     try {
       const stream = await this.ai.models.generateContentStream({
-        model: options.model ?? env.AI_MODEL,
+        model: this.resolveModel(options.model),
         contents: this.formatContents(messages),
         config: {
           maxOutputTokens: options.maxTokens ?? env.AI_MAX_TOKENS,
@@ -105,7 +114,7 @@ export class GeminiAdapter implements AIProviderAdapter {
   ): Promise<string> {
     try {
       const response = await this.ai.models.generateContent({
-        model: options.model ?? env.AI_MODEL,
+        model: this.resolveModel(options.model),
         contents: this.formatContents(messages),
         config: {
           maxOutputTokens: options.maxTokens ?? env.AI_MAX_TOKENS,

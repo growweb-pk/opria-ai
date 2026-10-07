@@ -37,98 +37,152 @@ export class OpenAIAdapter implements AIProviderAdapter {
     outputSchema: T,
     options: StructuredCallOptions
   ): Promise<z.infer<T>> {
-    const systemPrompt =
-      options.systemPrompt ??
-      "You are a precise AI assistant. Respond only with valid JSON matching the required schema.";
+    return this.withModelFallback(options.model, async (model) => {
+      const systemPrompt =
+        options.systemPrompt ??
+        "You are a precise AI assistant. Respond only with valid JSON matching the required schema.";
 
-    try {
-      const response = await this.client.chat.completions.create({
-        model: options.model ?? env.AI_MODEL,
-        max_tokens: options.maxTokens ?? env.AI_MAX_TOKENS,
-        temperature: options.temperature ?? 0.3,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        response_format: { type: "json_object" },
-      });
+      try {
+        const response = await this.client.chat.completions.create({
+          model,
+          max_tokens: options.maxTokens ?? env.AI_MAX_TOKENS,
+          temperature: options.temperature ?? 0.3,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          response_format: { type: "json_object" },
+        });
 
-      const content = response.choices[0]?.message?.content;
-      if (!content) {
-        throw new AIProviderError("Empty response from OpenAI");
+        const content = response.choices[0]?.message?.content;
+        if (!content) {
+          throw new AIProviderError("Empty response from OpenAI");
+        }
+
+        const parsed = JSON.parse(content);
+        return outputSchema.parse(parsed);
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        this.handleError(err);
+        // handleError always throws, but TypeScript needs this for type safety
+        throw new AIProviderError(`OpenAI structured call failed: ${err.message}`, err);
       }
-
-      const parsed = JSON.parse(content);
-      return outputSchema.parse(parsed);
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      this.handleError(err);
-      // handleError always throws, but TypeScript needs this for type safety
-      throw new AIProviderError(`OpenAI structured call failed: ${err.message}`, err);
-    }
+    });
   }
 
   async callStreaming(
     messages: ChatMessage[],
     options: StructuredCallOptions
   ): Promise<AsyncIterable<string>> {
-    try {
-      const stream = await this.client.chat.completions.create({
-        model: options.model ?? env.AI_MODEL,
-        max_tokens: options.maxTokens ?? env.AI_MAX_TOKENS,
-        temperature: options.temperature ?? 0.7,
-        messages: messages.map((m) => ({
-          role: this.mapRole(m.role),
-          content: m.content,
-        })),
-        stream: true,
-      });
+    return this.withModelFallback(options.model, async (model) => {
+      try {
+        const stream = await this.client.chat.completions.create({
+          model,
+          max_tokens: options.maxTokens ?? env.AI_MAX_TOKENS,
+          temperature: options.temperature ?? 0.7,
+          messages: messages.map((m) => ({
+            role: this.mapRole(m.role),
+            content: m.content,
+          })),
+          stream: true,
+        });
 
-      return {
-        [Symbol.asyncIterator]() {
-          return {
-            async next() {
-              const { value, done } = await stream[Symbol.asyncIterator]().next();
-              if (done) return { value: undefined, done: true };
-              const delta = value.choices[0]?.delta?.content ?? "";
-              return { value: delta, done: false };
-            },
-          };
-        },
-      };
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      this.handleError(err);
-      throw new AIProviderError(`OpenAI streaming failed: ${err.message}`, err);
-    }
+        return {
+          [Symbol.asyncIterator]() {
+            return {
+              async next() {
+                const { value, done } = await stream[Symbol.asyncIterator]().next();
+                if (done) return { value: undefined, done: true };
+                const delta = value.choices[0]?.delta?.content ?? "";
+                return { value: delta, done: false };
+              },
+            };
+          },
+        };
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        this.handleError(err);
+        throw new AIProviderError(`OpenAI streaming failed: ${err.message}`, err);
+      }
+    });
   }
 
   async callConversation(
     messages: ChatMessage[],
     options: StructuredCallOptions
   ): Promise<string> {
-    try {
-      const response = await this.client.chat.completions.create({
-        model: options.model ?? env.AI_MODEL,
-        max_tokens: options.maxTokens ?? env.AI_MAX_TOKENS,
-        temperature: options.temperature ?? 0.7,
-        messages: messages.map((m) => ({
-          role: this.mapRole(m.role),
-          content: m.content,
-        })),
-      });
+    return this.withModelFallback(options.model, async (model) => {
+      try {
+        const response = await this.client.chat.completions.create({
+          model,
+          max_tokens: options.maxTokens ?? env.AI_MAX_TOKENS,
+          temperature: options.temperature ?? 0.7,
+          messages: messages.map((m) => ({
+            role: this.mapRole(m.role),
+            content: m.content,
+          })),
+        });
 
-      const content = response.choices[0]?.message?.content;
-      if (!content) {
-        throw new AIProviderError("Empty response from OpenAI");
+        const content = response.choices[0]?.message?.content;
+        if (!content) {
+          throw new AIProviderError("Empty response from OpenAI");
+        }
+
+        return content;
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        this.handleError(err);
+        throw new AIProviderError(`OpenAI conversation failed: ${err.message}`, err);
       }
+    });
+  }
 
-      return content;
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      this.handleError(err);
-      throw new AIProviderError(`OpenAI conversation failed: ${err.message}`, err);
+  /**
+   * Free-model providers (e.g. OpenRouter :free tiers) saturate per-upstream
+   * pool, so model vars accept a comma-separated fallback chain. Rate limits
+   * and invalid-output failures try the next model; config-level errors
+   * (auth, bad base URL) fail fast on the first model.
+   */
+  private async withModelFallback<T>(
+    modelOption: string | undefined,
+    attempt: (model: string) => Promise<T>
+  ): Promise<T> {
+    const models = (modelOption ?? env.AI_MODEL)
+      .split(",")
+      .map((m) => m.trim())
+      .filter(Boolean);
+    if (models.length === 0) {
+      throw new AIProviderError("No AI model configured");
     }
+
+    let sawRateLimit = false;
+    let lastError: unknown = null;
+    for (const model of models) {
+      try {
+        return await attempt(model);
+      } catch (error) {
+        lastError = error;
+        if (error instanceof AIRateLimitError) {
+          sawRateLimit = true;
+          continue;
+        }
+        if (error instanceof AIValidationError) {
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    if (sawRateLimit) {
+      throw new AIRateLimitError(
+        `All configured models are rate-limited. Last error: ${
+          lastError instanceof Error ? lastError.message : String(lastError)
+        }`
+      );
+    }
+    throw lastError instanceof Error
+      ? lastError
+      : new AIProviderError(String(lastError));
   }
 
   private mapRole(role: string): "system" | "user" | "assistant" {
