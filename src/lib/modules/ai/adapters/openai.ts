@@ -27,8 +27,11 @@ export class OpenAIAdapter implements AIProviderAdapter {
     this.client = new OpenAI({
       apiKey: env.AI_API_KEY,
       baseURL: env.AI_BASE_URL,
-      maxRetries: 3,
-      timeout: 60_000,
+      // No SDK-level retries: the model fallback chain in withModelFallback
+      // is the retry mechanism — walking to the next model beats waiting
+      // backoff on a saturated one when routes have a 60s ceiling.
+      maxRetries: 0,
+      timeout: 55_000,
     });
   }
 
