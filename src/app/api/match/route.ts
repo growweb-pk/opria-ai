@@ -12,6 +12,8 @@ import {
   AIRateLimitError,
 } from "@/lib/modules/ai/types";
 
+export const maxDuration = 60;
+
 /**
  * POST /api/match
  * Triggers the hybrid matching pipeline for an APPROVED requirement owned by

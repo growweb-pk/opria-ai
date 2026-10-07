@@ -17,7 +17,7 @@
  */
 
 import { z } from "zod";
-import { callStructured } from "../provider";
+import { callStructured, structuredModel } from "../provider";
 import { ProvenanceEnum } from "../provenance";
 
 // ─── Input Schema ────────────────────────────────────────
@@ -221,5 +221,6 @@ Produce a comprehensive structured requirement document.`;
   return callStructured(userPrompt, RequirementStructuringOutput, {
     systemPrompt: SYSTEM_PROMPT,
     temperature: 0.3,
+    model: structuredModel(),
   });
 }

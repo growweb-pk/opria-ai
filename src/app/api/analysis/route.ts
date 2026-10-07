@@ -12,6 +12,10 @@ import {
   AIRateLimitError,
 } from "@/lib/modules/ai/types";
 
+// AI calls (gemini thinking model / OpenRouter free tiers) can exceed Vercel's
+// default 10s Hobby timeout — allow up to 60s.
+export const maxDuration = 60;
+
 /**
  * POST /api/analysis
  * Triggers AI business analysis for the authenticated business.

@@ -17,7 +17,7 @@
  */
 
 import { z } from "zod";
-import { callStructured } from "../provider";
+import { callStructured, structuredModel } from "../provider";
 import { ProvenanceEnum } from "../provenance";
 
 // ─── Input Schema ────────────────────────────────────────
@@ -139,5 +139,6 @@ Produce a comprehensive business analysis with health scores, SWOT, and key find
   return callStructured(userPrompt, BusinessAnalysisOutput, {
     systemPrompt: SYSTEM_PROMPT,
     temperature: 0.3,
+    model: structuredModel(),
   });
 }

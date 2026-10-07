@@ -43,7 +43,7 @@ export class OpenAIAdapter implements AIProviderAdapter {
 
     try {
       const response = await this.client.chat.completions.create({
-        model: env.AI_MODEL,
+        model: options.model ?? env.AI_MODEL,
         max_tokens: options.maxTokens ?? env.AI_MAX_TOKENS,
         temperature: options.temperature ?? 0.3,
         messages: [
@@ -74,7 +74,7 @@ export class OpenAIAdapter implements AIProviderAdapter {
   ): Promise<AsyncIterable<string>> {
     try {
       const stream = await this.client.chat.completions.create({
-        model: env.AI_MODEL,
+        model: options.model ?? env.AI_MODEL,
         max_tokens: options.maxTokens ?? env.AI_MAX_TOKENS,
         temperature: options.temperature ?? 0.7,
         messages: messages.map((m) => ({
@@ -109,7 +109,7 @@ export class OpenAIAdapter implements AIProviderAdapter {
   ): Promise<string> {
     try {
       const response = await this.client.chat.completions.create({
-        model: env.AI_MODEL,
+        model: options.model ?? env.AI_MODEL,
         max_tokens: options.maxTokens ?? env.AI_MAX_TOKENS,
         temperature: options.temperature ?? 0.7,
         messages: messages.map((m) => ({

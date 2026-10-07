@@ -8,6 +8,8 @@ import {
 import { createAdvisorConversationSchema } from "@/lib/modules/advisor/schemas";
 import { AIProviderError, AIValidationError, AIRateLimitError } from "@/lib/modules/ai/types";
 
+export const maxDuration = 60;
+
 export async function GET() {
   try {
     const user = await requireAuth(["BUSINESS"]);

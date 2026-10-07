@@ -18,7 +18,7 @@
  */
 
 import { z } from "zod";
-import { callStructured } from "../provider";
+import { callStructured, structuredModel } from "../provider";
 
 // ─── Input Schema ────────────────────────────────────────
 
@@ -156,5 +156,6 @@ Evaluate each professional against the requirement. Return results with AI score
   return callStructured(userPrompt, MatchingSupportOutput, {
     systemPrompt: SYSTEM_PROMPT,
     temperature: 0.3,
+    model: structuredModel(),
   });
 }

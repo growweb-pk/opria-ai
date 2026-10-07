@@ -20,6 +20,8 @@ export interface StructuredCallOptions {
   temperature?: number;
   maxTokens?: number;
   systemPrompt?: string;
+  /** Override the configured model for this call (falls back to AI_MODEL). */
+  model?: string;
 }
 
 // ─── Message Types ───────────────────────────────────────

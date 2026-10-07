@@ -17,7 +17,7 @@
  */
 
 import { z } from "zod";
-import { callStructured } from "../provider";
+import { callStructured, structuredModel } from "../provider";
 import { ProvenanceEnum } from "../provenance";
 
 // ─── Input Schema ────────────────────────────────────────
@@ -195,5 +195,6 @@ Identify 4-8 prioritized opportunities with detailed reasoning.`;
   return callStructured(userPrompt, OpportunityDiscoveryOutput, {
     systemPrompt: SYSTEM_PROMPT,
     temperature: 0.4,
+    model: structuredModel(),
   });
 }

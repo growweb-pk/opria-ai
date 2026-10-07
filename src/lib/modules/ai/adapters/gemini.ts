@@ -39,7 +39,7 @@ export class GeminiAdapter implements AIProviderAdapter {
 
     try {
       const response = await this.ai.models.generateContent({
-        model: env.AI_MODEL,
+        model: options.model ?? env.AI_MODEL,
         contents: userPrompt,
         config: {
           systemInstruction: systemPrompt,
@@ -72,7 +72,7 @@ export class GeminiAdapter implements AIProviderAdapter {
   ): Promise<AsyncIterable<string>> {
     try {
       const stream = await this.ai.models.generateContentStream({
-        model: env.AI_MODEL,
+        model: options.model ?? env.AI_MODEL,
         contents: this.formatContents(messages),
         config: {
           maxOutputTokens: options.maxTokens ?? env.AI_MAX_TOKENS,
@@ -105,7 +105,7 @@ export class GeminiAdapter implements AIProviderAdapter {
   ): Promise<string> {
     try {
       const response = await this.ai.models.generateContent({
-        model: env.AI_MODEL,
+        model: options.model ?? env.AI_MODEL,
         contents: this.formatContents(messages),
         config: {
           maxOutputTokens: options.maxTokens ?? env.AI_MAX_TOKENS,

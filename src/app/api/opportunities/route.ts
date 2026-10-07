@@ -12,6 +12,8 @@ import {
   AIRateLimitError,
 } from "@/lib/modules/ai/types";
 
+export const maxDuration = 60;
+
 /**
  * POST /api/opportunities
  * Triggers AI opportunity discovery for the authenticated business.

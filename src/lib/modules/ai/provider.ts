@@ -67,6 +67,21 @@ function getAdapter(): AIProviderAdapter {
 // ─── Public API ──────────────────────────────────────────
 
 /**
+ * Model for structured-output agents (analysis, research, matching,
+ * explanation, requirements, opportunities). Falls back to AI_MODEL.
+ */
+export function structuredModel(): string {
+  return env.AI_MODEL_JSON ?? env.AI_MODEL;
+}
+
+/**
+ * Model for the advisor conversational agent. Falls back to AI_MODEL.
+ */
+export function chatModel(): string {
+  return env.AI_MODEL_CHAT ?? env.AI_MODEL;
+}
+
+/**
  * Call the AI with a user prompt and parse the response into a structured Zod schema.
  * Returns validated output or throws on failure.
  */

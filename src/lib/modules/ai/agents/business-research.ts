@@ -17,7 +17,7 @@
  */
 
 import { z } from "zod";
-import { callStructured } from "../provider";
+import { callStructured, structuredModel } from "../provider";
 
 // ─── Input Schema ────────────────────────────────────────
 
@@ -103,5 +103,6 @@ Identify any missing information that would be useful for business advisory purp
   return callStructured(userPrompt, BusinessResearchOutput, {
     systemPrompt: SYSTEM_PROMPT,
     temperature: 0.2, // Low creativity — we want precise structuring
+    model: structuredModel(),
   });
 }

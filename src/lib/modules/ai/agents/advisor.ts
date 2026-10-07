@@ -19,7 +19,7 @@
  */
 
 import { z } from "zod";
-import { callStructured } from "../provider";
+import { callStructured, chatModel } from "../provider";
 
 // ─── Input Schema ────────────────────────────────────────
 
@@ -176,5 +176,6 @@ Respond as the advisor. Ask the next best follow-up question unless the requirem
   return callStructured(userPrompt, AdvisorOutput, {
     systemPrompt: SYSTEM_PROMPT,
     temperature: 0.5,
+    model: chatModel(),
   });
 }

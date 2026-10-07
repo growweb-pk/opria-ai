@@ -17,7 +17,7 @@
  */
 
 import { z } from "zod";
-import { callStructured } from "../provider";
+import { callStructured, structuredModel } from "../provider";
 
 // ─── Input Schema ────────────────────────────────────────
 
@@ -139,5 +139,6 @@ Generate a clear, honest explanation based ONLY on the data above.`;
   return callStructured(userPrompt, ExplanationOutput, {
     systemPrompt: SYSTEM_PROMPT,
     temperature: 0.5, // Moderate creativity for natural explanations
+    model: structuredModel(),
   });
 }

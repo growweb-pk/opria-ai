@@ -14,6 +14,8 @@ const envSchema = z.object({
   AI_PROVIDER: z.enum(["gemini", "openai", "custom"]).default("gemini"),
   AI_API_KEY: z.string().min(1),
   AI_MODEL: z.string().default("gemini-3.6-flash"),
+  AI_MODEL_JSON: z.string().optional(), // Structured-output agents (analysis, research, matching, etc.)
+  AI_MODEL_CHAT: z.string().optional(), // Advisor conversational agent
   AI_MAX_TOKENS: z.coerce.number().default(4096),
   AI_BASE_URL: z.string().url().optional(), // For OpenAI/custom providers
 
